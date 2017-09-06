@@ -3,6 +3,7 @@ package kr.or.ddit.member;
 import java.util.Map;
 
 import kr.or.ddit.database.Database;
+import kr.or.ddit.vo.MemberVO;
 
 public class MemberDaoImpl implements MemberDao {
 
@@ -64,7 +65,7 @@ public class MemberDaoImpl implements MemberDao {
 	}
 	
 	@Override
-	public int chargeMoney(int id, int money) {
+	public MemberVO chargeMoney(int id, int money) {
 		
 		return db.chargeMoney(id, money);
 	}

@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.Scanner;
 
+//사용되지 않는 클래스입니다.
+//행맨 별도로 인스턴스화 할 때를 위해  남겨놓음
+
 class Methods {
 	Scanner sc = new Scanner(System.in);
 	Random rd = new Random();

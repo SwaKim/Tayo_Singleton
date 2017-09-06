@@ -2,6 +2,8 @@ package kr.or.ddit.member;
 
 import java.util.Map;
 
+import kr.or.ddit.vo.MemberVO;
+
 /**
  * @Class Name : MemberService.java
  * @Description 
@@ -57,7 +59,7 @@ public interface MemberService {
 	 * @param 유저 id 금액 money
 	 * @return int money금액
 	 */
-	public int chargeMoney(int id, int money);
+	public MemberVO chargeMoney(int id, int money);
 
 	/**
 	 * 관리자:회원리스트

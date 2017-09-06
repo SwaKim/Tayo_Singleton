@@ -2,6 +2,8 @@ package kr.or.ddit.member;
 
 import java.util.Map;
 
+import kr.or.ddit.vo.MemberVO;
+
 public interface MemberDao {
 
 	boolean createMember(Map<String, String> member);
@@ -12,7 +14,7 @@ public interface MemberDao {
 
 	int loginCheck(Map<String, String> login);
 
-	int chargeMoney(int id, int money);
+	MemberVO chargeMoney(int id, int money);
 
 	boolean showMemberList();
 

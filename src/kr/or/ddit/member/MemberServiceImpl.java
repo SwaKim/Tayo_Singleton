@@ -2,6 +2,8 @@ package kr.or.ddit.member;
 
 import java.util.Map;
 
+import kr.or.ddit.vo.MemberVO;
+
 /**
  * @Class Name : MemberServiceImpl.java
  * @Description 
@@ -67,7 +69,7 @@ public class MemberServiceImpl implements MemberService{
 	
 	// 충전
 	@Override
-	public int chargeMoney(int id, int money) {
+	public MemberVO chargeMoney(int id, int money) {
 		
 		return memberDao.chargeMoney(id, money);
 	}

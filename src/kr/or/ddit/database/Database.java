@@ -242,14 +242,17 @@ public class Database {
 	 * @param 로그인중인 회원 인덱스
 	 * @return int 충전후 잔액
 	 */
-	public int chargeMoney(int id, int addMoney) {
+	public MemberVO chargeMoney(int id, int addMoney) {
+		MemberVO session = new MemberVO();
 		for (int i = 0; i < mbList.size(); i++) {
 			if (mbList.get(i).getIndex() == id) {
-				mbList.get(i).setMbUserMoney(addMoney);
-				return mbList.get(i).getMbUserMoney();
+				//mbList.get(i).setMbUserMoney(addMoney);
+//				return mbList.get(i).getMbUserMoney();
+				session.setMbUserMoney(session.getMbUserMoney()+addMoney);
+				return session;
 			}
 		}
-		return -1;
+		return null;
 	}
 
 	/**

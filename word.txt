@@ -1,2 +1,6 @@
-hangman
-Tayo
+Hangman
+Tayo Application
+Java Programming
+Hyun Woo Seok
+Yee Jung Woo
+Kim Su Hwan

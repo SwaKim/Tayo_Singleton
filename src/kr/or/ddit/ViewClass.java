@@ -1,20 +1,21 @@
 package kr.or.ddit;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import kr.or.ddit.bus.BusService;
 import kr.or.ddit.bus.BusServiceImpl;
-import kr.or.ddit.member.MemberDaoImpl;
+import kr.or.ddit.common.Regular;
+import kr.or.ddit.common.Util;
+import kr.or.ddit.hangman.HangManService;
+import kr.or.ddit.hangman.HangmanServiceImpl;
 import kr.or.ddit.member.MemberService;
 import kr.or.ddit.member.MemberServiceImpl;
 import kr.or.ddit.ticket.TicketService;
 import kr.or.ddit.ticket.TicketServiceImpl;
-import kr.or.ddit.common.Regular;
-import kr.or.ddit.common.Util;
+import kr.or.ddit.vo.MemberVO;
 
 
 /**
@@ -45,10 +46,12 @@ public class ViewClass {
    private TicketService ticketService = TicketServiceImpl.getInstance();
    private MemberService memberService = MemberServiceImpl.getInstance();
    private BusService busService = BusServiceImpl.getInstance();
+   private HangManService hangman = HangmanServiceImpl.getInstance();
    
    static Scanner sc = new Scanner(System.in);
    static Map<String, String> join = new HashMap<String, String>();
    int session = -1;                                             // 로그인 상태. -1 = 비회원
+   MemberVO sessions = new MemberVO();
 
    // 메인메뉴
    void startMenu() {
@@ -58,6 +61,8 @@ public class ViewClass {
          System.out.println("┃");
          System.out.println("┃\t1 : 로그인");
          System.out.println("┃\t2 : 회원가입");
+         System.out.println("┃\t3 : HangMan!!");
+         System.out.println("┃\t4 : 프로그램 종료");
          System.out.println("┃");
          System.out.print("┗━━━━━━━━원하는 메뉴의 숫자를 입력하세요 : ");
          String input = sc.next();
@@ -70,6 +75,14 @@ public class ViewClass {
          case "회원가입":
             join();
             break;
+         case "3":
+         case "Hangman":
+        	 hangmanGame();
+        	 break;
+         case "4":
+         case "종료":
+        	 System.out.println("\n"+new Date()+"\n프로그램이 종료 되었습니다.");
+        	 System.exit(0);
          default:
             System.out.println("잘못된 입력입니다.");
             continue;
@@ -346,11 +359,10 @@ public class ViewClass {
    // 포인트충전
    private void chargeMoney() {
       clear();                                                            //화면정리
-      String inputMoney = "0";
-      int currentMoney = memberService.chargeMoney(session, Integer.parseInt(inputMoney));   
+      String inputMoney = "0";   
       System.out.println("┏━━━━포인트 충전━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓");
       System.out.println("┃");
-      System.out.println("┃\t고객님께서 현재 보유하신 금액은 "+currentMoney+"원 입니다.");
+      System.out.println("┃\t고객님께서 현재 보유하신 금액은 "+sessions.getMbUserMoney()+"원 입니다.");
       System.out.println("┃최소 천단위 최대 천만단위");
       System.out.print("┗━━━━선불 결제할 금액을 입력해 주세요 : ");
       try {
@@ -362,12 +374,12 @@ public class ViewClass {
                return;
             }
          }
-         currentMoney = memberService.chargeMoney(session, Integer.parseInt(inputMoney));            //현재 잔액
+         sessions = memberService.chargeMoney(session, Integer.parseInt(inputMoney));            //충전 후 현재 잔액
       } catch (Exception e) {
          System.out.println("충전가능한범위를 넘었습니다.");
       }
 
-         System.out.println("고객님께서 현재 보유하신 금액은 "+currentMoney+"원 입니다.");
+         System.out.println("고객님께서 현재 보유하신 금액은 "+sessions.getMbUserMoney()+"원 입니다.");
 
 
    }
@@ -623,6 +635,75 @@ public class ViewClass {
     */
    private void clear(){
       for (int i = 0; i < 2; i++)   System.out.println("");   
+   }
+   
+   public void hangmanGame() {		
+		Scanner sc = new Scanner(System.in);
+		
+		while (true) {
+			clear();
+			System.out.println("┏━━━━ 행맨 게임에 오신것을 환영합니다. ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓");
+			System.out.println("┃\t");
+			System.out.println("┃\t1.Easy");
+			System.out.println("┃\t2.Medium");
+			System.out.println("┃\t3.Hard");
+			System.out.println("┃\t4.Ultra Hard");
+			System.out.println("┃\t");
+	         System.out.print("┗━━━━━━━━원하는 메뉴의 숫자를 입력하세요 : ");
+			int level = sc.nextInt();
+			hangman.setWord();
+			hangman.setBlank(level + 2);
+			hangmanPlay(hangman.setBlank(level + 2));									//레벨을 입력받아 setBlank메서드 '빈칸수'를 늘립니다.
+
+			System.out.println("다시 시작하시겠습니까? (Y/N)");
+			String YN = sc.next();
+			if(YN.equals("N")||YN.equals("n")){
+				break;
+			}
+
+		}
+   }
+   
+   public void hangmanPlay(Map<String, Object> newGame){
+	   String[] str = (String[]) newGame.get("str");
+	   String question = (String) newGame.get("question");
+	   String answer = (String) newGame.get("answer");
+	   int[] wordnum = (int[]) newGame.get("wordnum");
+	   int count = 1;
+
+	   System.out.println(question);
+	   LABEL:
+		   while (count<=5) {
+			   System.out.println("현재 "+(count++)+"라운드");
+			   System.out.println("글자를 입력하세요 : ");
+			   String letter = sc.nextLine();
+			   String letterBig = letter.toUpperCase();
+			   String letterSmall=letter.toLowerCase();
+
+			   for (int i = 0; i < str.length; i++) {
+				   if (str[i].equals(letter)||str[i].equals(letterBig)||str[i].equals(letterSmall)) {
+					   //소문자든 대문자든 같은 글자로 처리
+
+					   String tempWord = question;
+					   question = question.substring(0, wordnum[i])+str[i]+question.substring(wordnum[i]+1, question.length());
+					   //해당 '-'을(word[wordNum[i]] 해당문자로 교체하여 word에 다시 넣어준다.)
+
+					   for (int j = 0; j < str.length; j++) {
+						   if (str[j].equals(str[i])) {
+							   question = question.substring(0, wordnum[j])+str[j]
+									   + question.substring(wordnum[j]+1, question.length());
+						   }
+					   }
+					   if(!tempWord.toUpperCase().equals(question.toUpperCase())){
+						   System.out.println(question);
+					   }
+					   if (question.equals(answer)) {
+						   System.out.println("정답입니다!");
+						   break LABEL;
+					   }
+				   }
+			   }
+		   }
    }
 
 }
