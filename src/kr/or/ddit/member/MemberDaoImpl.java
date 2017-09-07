@@ -22,9 +22,9 @@ public class MemberDaoImpl implements MemberDao {
 	}
 
 	@Override
-	public boolean createMember(Map<String, String> member) {
+	public boolean createMember(MemberVO joinMemberVO) {
 		
-		return db.createMember(member);
+		return db.createMember(joinMemberVO);
 	}
 
 	@Override
@@ -36,32 +36,13 @@ public class MemberDaoImpl implements MemberDao {
 	@Override
 	public boolean idCheck(String menberid) {
 		
-		return db.idCheck(menberid);
+		return db.joinIdCheck(menberid);
 	}
 	
+	//로그인
 	@Override
-	public int loginCheck(Map<String, String> login) {
-		try {
-			if (db.readIdPwFromDB(login).get("userId").equals(login.get("userId"))) {	// 회원
-
-				if (!db.readIdPwFromDB(login).get("userPw").equals(login.get("userPw"))) {
-					return -1;// 비밀번호틀림
-
-				} else {
-					if (db.readIdPwFromDB(login).get("isAdmin").equals("true")) {
-						return -2;// 관리자 로그인
-
-					} else {
-						return Integer.parseInt(db.readIdPwFromDB(login).get("index"));	// 로그인 완료, 해당 회원 인덱스값 반환
-					}
-				}
-			}
-		} catch (NullPointerException e) {
-			return -3;
-		}
-		
-
-		return -3;																		// 아이디 없음.
+	public MemberVO findThisMember(Map<String, String> login) {
+		return db.readThisMember(login);
 	}
 	
 	@Override
@@ -76,12 +57,8 @@ public class MemberDaoImpl implements MemberDao {
 			return false;
 		} else {
 			for (int i = 0; i < db.getListSize("member"); i++) {
-
 				System.out.println(db.getMemberList(i));
-
 			}
-
-
 		}
 		return true;
 	}

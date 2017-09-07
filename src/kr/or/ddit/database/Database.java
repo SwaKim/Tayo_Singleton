@@ -53,6 +53,8 @@ public class Database {
 		mb.setMbUserName("관리자");
 		mb.setMbUserMoney(100000);
 		
+		mbList.add(mb);
+		
 		//테스트용 선기입 데이터, 실제 운용시 삭제
 	}
 	
@@ -167,18 +169,18 @@ public class Database {
 	 * @param 회원VO
 	 * @return boolean 결과,리스트추가
 	 */
-	public boolean createMember(Map<String, String> memberInfo) {						// 중복체크는 별도의 메서드
+	public boolean createMember(MemberVO joinMemberVO) {						// 중복체크는 별도의 메서드
 		for (int i = 0; i < mbList.size(); i++) {
-			if (mbList.get(i).getMbUserId().equals(memberInfo.get("userId"))) {
+			if (mbList.get(i).getMbUserId().equals(joinMemberVO.getMbUserId())) {
 				return false;
 			}
 		} // 가입된 회원중 ID가 중복되는 값이 없을 경우
 		MemberVO newVO = new MemberVO();
 
-		newVO.setIndex(mbIndex++);															// 인덱스
-		newVO.setMbUserId(memberInfo.get("userId")); 									// 아이디
-		newVO.setMbUserPw(memberInfo.get("userPw"));									// 비밀번호
-		newVO.setMbUserName(memberInfo.get("userName")); 								// 이름
+		newVO.setIndex(mbIndex++);														// 인덱스
+		newVO.setMbUserId(joinMemberVO.getMbUserId()); 									// 아이디
+		newVO.setMbUserPw(joinMemberVO.getMbUserPw());									// 비밀번호
+		newVO.setMbUserName(joinMemberVO.getMbUserName()); 								// 이름
 		return mbList.add(newVO);
 	}
 
@@ -188,7 +190,7 @@ public class Database {
 	 * @param 입력ID
 	 * @return boolean 중복되는 아이디가 없는지 체크
 	 */
-	public boolean idCheck(String userId) {
+	public boolean joinIdCheck(String userId) {
 		for (int i = 0; i < mbList.size(); i++) {
 			if (mbList.get(i).getMbUserId().equals(userId)) {							// 회원 중복 체크
 				return false;															// 중복이면 가입을 중지
@@ -222,17 +224,17 @@ public class Database {
 	 * @param 입력받은 회원 인덱스
 	 * @return Map 로그인정보
 	 */
-	public Map<String, String> readIdPwFromDB(Map<String, String> input) {
-		Map<String, String> readData = new HashMap<String, String>();
+	public MemberVO readThisMember(Map<String, String> input) {
 		for (int i = 0; i < mbList.size(); i++) {
 			if (mbList.get(i).getMbUserId().equals(input.get("userId"))) {
-				readData.put("index", String.valueOf(mbList.get(i).getIndex()));
+/*				readData.put("index", String.valueOf(mbList.get(i).getIndex()));
 				readData.put("userId", mbList.get(i).getMbUserId());
 				readData.put("userPw", mbList.get(i).getMbUserPw());
-				readData.put("isAdmin", String.valueOf(mbList.get(i).isAdmin()));
+				readData.put("isAdmin", String.valueOf(mbList.get(i).isAdmin()));*/
+				return mbList.get(i);
 			}
 		}
-		return readData;
+		return null;
 	}
 
 	/**
@@ -243,13 +245,12 @@ public class Database {
 	 * @return int 충전후 잔액
 	 */
 	public MemberVO chargeMoney(int id, int addMoney) {
-		MemberVO session = new MemberVO();
 		for (int i = 0; i < mbList.size(); i++) {
 			if (mbList.get(i).getIndex() == id) {
 				//mbList.get(i).setMbUserMoney(addMoney);
 //				return mbList.get(i).getMbUserMoney();
-				session.setMbUserMoney(session.getMbUserMoney()+addMoney);
-				return session;
+				mbList.get(i).setMbUserMoney(mbList.get(i).getMbUserMoney()+addMoney);
+				return mbList.get(i);
 			}
 		}
 		return null;
