@@ -16,6 +16,7 @@ import kr.or.ddit.member.MemberServiceImpl;
 import kr.or.ddit.ticket.TicketService;
 import kr.or.ddit.ticket.TicketServiceImpl;
 import kr.or.ddit.vo.MemberVO;
+import kr.or.ddit.vo.TicketVO;
 
 
 /**
@@ -270,7 +271,7 @@ public class ViewClass {
 
 	// 버스예매하기
 	private void ticketing() {
-		Map<String, String> temp = new HashMap<String, String>();
+		TicketVO paidVo = new TicketVO();
 
 		clear();                                                //화면정리
 		System.out.println("┏━━━━버스예매━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓");
@@ -289,12 +290,12 @@ public class ViewClass {
 
 		System.out.println("┗━━━━좌석 선택 (일반 45, 우등35) :");
 		String seat = sc.next();
-
-		temp.put("session", String.valueOf(session));
-		temp.put("seat", seat);
-		temp.put("bsRoute", bsRoute);
-
-		int payCheck = ticketService.payBusTicket(temp);
+		
+		paidVo.setMemIndex(session);
+		paidVo.setSeatIndex(Integer.parseInt(seat));
+		paidVo.setBusIndex(Integer.parseInt(bsRoute));
+		
+		int payCheck = ticketService.payBusTicket(paidVo);
 
 		if (payCheck == -1) {
 			System.out.println("해당 노선이 존재하지 않습니다");
@@ -604,7 +605,29 @@ public class ViewClass {
 
 	//버스 변경
 	private void reBus() {
-		removeBus("변경");                                          // 노선삭제
+//		removeBus("변경");                                          // 노선삭제
+		clear();                                                //화면정리
+		System.out.println("┏━━━━노선변경━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓");
+		System.out.println("┃");
+		System.out.println("┃\t번호\t노선\t출발시간\t\t버스등급\t가격\t좌석");
+		busService.showBusList();
+		System.out.println("┃");
+		System.out.println("┗━━━━변경할 노선의 번호를 입력해주세요 : ");
+		int changeBusIndex = 0;
+
+		try {
+			changeBusIndex = sc.nextInt();
+		} catch (Exception e) {
+			System.out.println("숫자만 입력해 주세요.");
+		}
+
+		boolean busCheck = busService.removeBus(changeBusIndex);
+
+		if (busCheck) {
+			System.out.println(changeBusIndex+"번을 변경합니다. 현재 노선은 기록으로 남고 새로운 노선이 추가됩니다.");
+		} else {
+			System.out.println("다시한번 확인해 주세요.");
+		}
 		addBus("변경");                                             // 노선추가
 	}
 

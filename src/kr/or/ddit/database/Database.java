@@ -56,6 +56,25 @@ public class Database {
 		mbList.add(mb);
 		
 		//테스트용 선기입 데이터, 실제 운용시 삭제
+		
+		BusVO bs = new BusVO();
+		bs.setIndex(bsIndex++);
+		bs.setBsRoute("대전-서울");
+		bs.setBsDepartureTime(df.format(new Date()));
+		bs.setBsPrice("5000");
+		bs.setBsKind("우등");
+		bs.setBsTotalSeat(35);
+		bs.setIsExfired("운행중");
+		bsList.add(bs);
+		BusVO bs1 = new BusVO();
+		bs1.setIndex(bsIndex++);
+		bs1.setBsRoute("(구)나주-강릉");
+		bs1.setBsDepartureTime(df.format(new Date()));
+		bs1.setBsPrice("8000");
+		bs1.setBsKind("우등");
+		bs1.setBsTotalSeat(35);
+		bs1.setIsExfired("만료됨");
+		bsList.add(bs1);
 	}
 	
 	
@@ -131,8 +150,11 @@ public class Database {
 							bsList.get(index).getBsRoute() + "\t" + 					// 노선
 							bsList.get(index).getBsDepartureTime() + "\t" + 			// 출발시간
 							bsList.get(index).getBsKind() + "\t" + 						// 버스등급
-							bsList.get(index).getBsPrice() + "\t" + 					// 가격
-							remainSeat + "\t";											// 남은좌석
+							bsList.get(index).getBsPrice() + "\t" ; 					// 가격
+		if(bsList.get(index).getIsExfired().equals("운행중")){
+			toString += remainSeat + "\t";											// 남은좌석
+		}
+		toString += bsList.get(index).getIsExfired() + "\t";
 		return toString;
 	}
 	
@@ -278,6 +300,7 @@ public class Database {
 			newVO.setBsRoute(busInfo.get("bsRoute"));													// 노선
 			newVO.setBsPrice(busInfo.get("bsPrice"));													// 요금
 			newVO.setBsDepartureTime(df.format(new Date().getTime() + ( (long) 1000 * 60 * 60 * i )));	// 출발시간
+			newVO.setIsExfired("운행중");																	// 운행여부
 			newVO.setBsKind(busInfo.get("bsKind")); 													// 일반-우등
 			if(busInfo.get("bsKind").equals("우등")){														// 좌석
 				newVO.setBsTotalSeat(35);
@@ -302,6 +325,25 @@ public class Database {
 		for (int i = 0; i < bsList.size(); i++) {
 			if (bsList.get(i).getIndex() == bus_id) {
 				bsList.remove(i);
+				return true;
+			}
+		}
+
+		return false;
+	}
+	
+	/**
+	 * 버스DB-노선비활성화
+	 *	DB에서 '입력한 index'에 해당하는 버스을 찾아 이름을 바꾸고 비활성화 수행
+	 * 
+	 * @param 인덱스값
+	 * @return boolean 삭제결과
+	 */
+	public boolean changeBus(int bus_id) {
+		for (int i = 0; i < bsList.size(); i++) {
+			if (bsList.get(i).getIndex() == bus_id) {
+				bsList.get(i).setBsRoute("(구)"+bsList.get(i).getBsRoute());
+				bsList.get(i).setIsExfired("만료됨");
 				return true;
 			}
 		}
@@ -341,26 +383,26 @@ public class Database {
 	 * @param 버스VO
 	 * @return int 구입후잔액, -1 해당 노선이 존재하지 않습니다, -2 좌석이 이미 판매되었습니다, -3	 잔액이 부족합니다.
 	 */
-	public int createTicket(Map<String, String> ticketInfo) {
+	public int createTicket(TicketVO paidVo) {
 
 		for (int j = 0; j < bsList.size(); j++) {
-			if (String.valueOf(bsList.get(j).getIndex()).equals(ticketInfo.get("bsRoute"))) {			// 해당 노선이 있을때
+			if (String.valueOf(bsList.get(j).getIndex()).equals(paidVo.getBusIndex()) && bsList.get(j).getIsExfired().equals("운행중")) {	// 해당 노선이 운행중일때
 				// 팔린좌석인지 체크하는 반복문
 				for (int i = 0; i < tkList.size(); i++) {
 					if (tkList.get(i).getBusIndex() == bsList.get(j).getIndex() && 						// 티켓의 외래키(버스id)로 버스정보 얻어오기-
-							tkList.get(i).getSeatIndex() == Integer.parseInt(ticketInfo.get("seat"))) {	// 팔린좌석인가?
+							tkList.get(i).getSeatIndex() == paidVo.getSeatIndex()) {	// 팔린좌석인가?
 						return -2;	//좌석이 이미 판매되었습니다.
 					}
 				}// 안팔렸다!
 				TicketVO newVO = new TicketVO();
 
-				newVO.setId(bsIndex++);												// 티켓인덱스
-				newVO.setMemIndex(Integer.parseInt(ticketInfo.get("session")));		// 구매자		를 외래키를 이용하여 호출
-				newVO.setBusIndex(bsList.get(j).getIndex());								// 버스정보	를 외래키를 이용하여 호출
-				newVO.setTkBuyTime(df.format(new Date()));							// 구매시간
-				newVO.setSeatIndex(Integer.parseInt(ticketInfo.get("seat")));;			// 좌석
+				newVO.setId(bsIndex++);													// 티켓인덱스
+				newVO.setMemIndex(paidVo.getMemIndex());								// 구매자를 외래키를 이용하여 호출
+				newVO.setBusIndex(bsList.get(j).getIndex());							// 버스정보	를 외래키를 이용하여 호출
+				newVO.setTkBuyTime(df.format(new Date()));								// 구매시간
+				newVO.setSeatIndex(paidVo.getSeatIndex());								// 좌석
 				for (int i = 0; i < mbList.size(); i++) {
-					if (mbList.get(i).getIndex() == Integer.parseInt(ticketInfo.get("session"))) {
+					if (mbList.get(i).getIndex() == paidVo.getMemIndex()) {
 						if(mbList.get(i).getMbUserMoney() >= Integer.parseInt(bsList.get(j).getBsPrice())){	//현재 잔액이 결제금액보다 많으면
 							tkList.add(newVO);																// 티켓목록에 새로운 티켓추가
 							mbList.get(i).setMbUserMoney(-Integer.parseInt(bsList.get(j).getBsPrice()));	//결제가능

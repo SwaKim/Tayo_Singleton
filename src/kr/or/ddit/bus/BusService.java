@@ -35,6 +35,14 @@ public interface BusService {
 	 * @return boolean
 	 */
 	public boolean removeBus(int id);
+	
+	/**
+	 * 노선변경 
+	 * 버스의 id값을 받아와 비활성화한다.
+	 * @param id
+	 * @return boolean
+	 */
+	public boolean changeBus(int id);
 
 	/**
 	 * 관리자:버스리스트

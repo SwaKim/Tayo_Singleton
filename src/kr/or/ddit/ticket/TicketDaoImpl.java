@@ -3,6 +3,7 @@ package kr.or.ddit.ticket;
 import java.util.Map;
 
 import kr.or.ddit.database.Database;
+import kr.or.ddit.vo.TicketVO;
 
 public class TicketDaoImpl implements TicketDao{
 
@@ -23,9 +24,9 @@ public class TicketDaoImpl implements TicketDao{
 	}
 	
 	@Override
-	public int payBusTicket(Map<String, String> ticket) {
+	public int payBusTicket(TicketVO paidVo) {
 		
-		return db.createTicket(ticket);// db.createTicket(ticket);
+		return db.createTicket(paidVo);// db.createTicket(ticket);
 	}
 	
 	// 환불 -1  티켓이 없다. -2 구매자가 아니다.

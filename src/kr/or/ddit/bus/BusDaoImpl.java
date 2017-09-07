@@ -34,6 +34,13 @@ public class BusDaoImpl implements BusDao{
 		return db.deleteBus(id);
 	}
 
+	// 버스변경  
+	@Override
+	public boolean changeBus(int id) {
+
+		return db.deleteBus(id);
+	}
+
 	// 버스리스트
 	public boolean showBusList() {
 		// busVosize

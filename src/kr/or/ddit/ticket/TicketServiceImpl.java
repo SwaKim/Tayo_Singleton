@@ -2,6 +2,8 @@ package kr.or.ddit.ticket;
 
 import java.util.Map;
 
+import kr.or.ddit.vo.TicketVO;
+
 /**
  * @Class Name : TicketServiceImpl.java
  * @Description 
@@ -40,9 +42,9 @@ public class TicketServiceImpl implements TicketService{
 	
 	// 티켓구입 = 티켓 생성
 	@Override
-	public int payBusTicket(Map<String, String> ticket) {
+	public int payBusTicket(TicketVO paidVo) {
 
-		int result = ticketDao.payBusTicket(ticket); 
+		int result = ticketDao.payBusTicket(paidVo); 
 		if(result == -1){
 			return -1;
 		}else if(result == -2){
