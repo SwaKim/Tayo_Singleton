@@ -41,9 +41,9 @@ public class MemberServiceImpl implements MemberService{
 	
 	// 회원추가
 	@Override
-	public boolean joinMember(Map<String, String> member) {
+	public boolean joinMember(MemberVO joinMemberVO) {
 
-		return memberDao.createMember(member);
+		return memberDao.createMember(joinMemberVO);
 	}
 
 	// 회원삭제
@@ -62,9 +62,29 @@ public class MemberServiceImpl implements MemberService{
 
 	// 아이디체크
 	@Override
-	public int loginCheck(Map<String, String> login) {
+	public int loginCheck(Map<String, String> loginVO) {
+		MemberVO memberFromDB = memberDao.findThisMember(loginVO);
+		try {
+			if (memberFromDB.getMbUserId().equals(loginVO.get("userId"))) {	// 회원
 
-		return memberDao.loginCheck(login);																		// 아이디 없음.
+				if (!memberFromDB.getMbUserPw().equals(loginVO.get("userPw"))) {
+					return -1;// 비밀번호틀림
+
+				} else {
+					if (memberFromDB.isAdmin()==true) {
+						return -2;// 관리자 로그인
+
+					} else {
+						return memberFromDB.getIndex();	// 로그인 완료, 해당 회원 인덱스값 반환
+					}
+				}
+			}
+		} catch (NullPointerException e) {
+			return -3;
+		}
+		
+
+		return -3;																		// 아이디 없음.
 	}
 	
 	// 충전

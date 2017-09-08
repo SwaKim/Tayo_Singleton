@@ -1,15 +1,29 @@
 package kr.or.ddit.database;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import kr.or.ddit.vo.BusVO;
 import kr.or.ddit.vo.MemberVO;
 import kr.or.ddit.vo.TicketVO;
+import jxl.Sheet;
+import jxl.Workbook;
+import jxl.format.Alignment;
+import jxl.format.Colour;
+import jxl.read.biff.BiffException;
+import jxl.write.Label;
+import jxl.write.WritableCellFormat;
+import jxl.write.WritableFont;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
+import jxl.write.biff.RowsExceededException;
 /**
  * @Class Name : Database.java
  * @Description 데이터 조회 목적
@@ -45,15 +59,42 @@ public class Database {
 	
 
 	{
-		MemberVO mb = new MemberVO();
-		mb.setIndex(mbIndex++);
-		mb.setAdmin(true);
-		mb.setMbUserId("admin");
-		mb.setMbUserPw("admin");
-		mb.setMbUserName("관리자");
-		mb.setMbUserMoney(100000);
+		importMemList();
+		
+		if(mbList.size()==0){
+			MemberVO mb = new MemberVO();
+			mb.setIndex(mbIndex++);
+			mb.setAdmin(true);
+			mb.setMbUserId("admin");
+			mb.setMbUserPw("!admin");
+			mb.setMbUserName("관리자");
+			mb.setMbUserMoney(100000);
+			
+			mbList.add(mb);
+			exportMemList(mbList);
+		}
+		
 		
 		//테스트용 선기입 데이터, 실제 운용시 삭제
+		
+//		BusVO bs = new BusVO();
+//		bs.setIndex(bsIndex++);
+//		bs.setBsRoute("대전-서울");
+//		bs.setBsDepartureTime(df.format(new Date()));
+//		bs.setBsPrice("5000");
+//		bs.setBsKind("우등");
+//		bs.setBsTotalSeat(35);
+//		bs.setIsExfired("운행중");
+//		bsList.add(bs);
+//		BusVO bs1 = new BusVO();
+//		bs1.setIndex(bsIndex++);
+//		bs1.setBsRoute("(구)나주-강릉");
+//		bs1.setBsDepartureTime(df.format(new Date()));
+//		bs1.setBsPrice("8000");
+//		bs1.setBsKind("우등");
+//		bs1.setBsTotalSeat(35);
+//		bs1.setIsExfired("만료됨");
+//		bsList.add(bs1);
 	}
 	
 	
@@ -129,8 +170,11 @@ public class Database {
 							bsList.get(index).getBsRoute() + "\t" + 					// 노선
 							bsList.get(index).getBsDepartureTime() + "\t" + 			// 출발시간
 							bsList.get(index).getBsKind() + "\t" + 						// 버스등급
-							bsList.get(index).getBsPrice() + "\t" + 					// 가격
-							remainSeat + "\t";											// 남은좌석
+							bsList.get(index).getBsPrice() + "\t" ; 					// 가격
+		if(bsList.get(index).getIsExfired().equals("운행중")){
+			toString += remainSeat + "\t";											// 남은좌석
+		}
+		toString += bsList.get(index).getIsExfired() + "\t";
 		return toString;
 	}
 	
@@ -167,19 +211,21 @@ public class Database {
 	 * @param 회원VO
 	 * @return boolean 결과,리스트추가
 	 */
-	public boolean createMember(Map<String, String> memberInfo) {						// 중복체크는 별도의 메서드
+	public boolean createMember(MemberVO joinMemberVO) {						// 중복체크는 별도의 메서드
 		for (int i = 0; i < mbList.size(); i++) {
-			if (mbList.get(i).getMbUserId().equals(memberInfo.get("userId"))) {
+			if (mbList.get(i).getMbUserId().equals(joinMemberVO.getMbUserId())) {
 				return false;
 			}
 		} // 가입된 회원중 ID가 중복되는 값이 없을 경우
 		MemberVO newVO = new MemberVO();
 
-		newVO.setIndex(mbIndex++);															// 인덱스
-		newVO.setMbUserId(memberInfo.get("userId")); 									// 아이디
-		newVO.setMbUserPw(memberInfo.get("userPw"));									// 비밀번호
-		newVO.setMbUserName(memberInfo.get("userName")); 								// 이름
-		return mbList.add(newVO);
+		newVO.setIndex(mbIndex++);														// 인덱스
+		newVO.setMbUserId(joinMemberVO.getMbUserId()); 									// 아이디
+		newVO.setMbUserPw(joinMemberVO.getMbUserPw());									// 비밀번호
+		newVO.setMbUserName(joinMemberVO.getMbUserName());
+		boolean result =mbList.add(newVO);
+		exportMemList(mbList);
+		return result;
 	}
 
 	/**
@@ -188,7 +234,7 @@ public class Database {
 	 * @param 입력ID
 	 * @return boolean 중복되는 아이디가 없는지 체크
 	 */
-	public boolean idCheck(String userId) {
+	public boolean joinIdCheck(String userId) {
 		for (int i = 0; i < mbList.size(); i++) {
 			if (mbList.get(i).getMbUserId().equals(userId)) {							// 회원 중복 체크
 				return false;															// 중복이면 가입을 중지
@@ -208,6 +254,7 @@ public class Database {
 		for (int i = 0; i < mbList.size(); i++) {
 			if (mbList.get(i).getIndex() == memIndex) {
 				mbList.remove(i);
+				exportMemList(mbList);
 				return true;
 			}
 		}
@@ -222,17 +269,17 @@ public class Database {
 	 * @param 입력받은 회원 인덱스
 	 * @return Map 로그인정보
 	 */
-	public Map<String, String> readIdPwFromDB(Map<String, String> input) {
-		Map<String, String> readData = new HashMap<String, String>();
+	public MemberVO readThisMember(Map<String, String> input) {
 		for (int i = 0; i < mbList.size(); i++) {
 			if (mbList.get(i).getMbUserId().equals(input.get("userId"))) {
-				readData.put("index", String.valueOf(mbList.get(i).getIndex()));
+/*				readData.put("index", String.valueOf(mbList.get(i).getIndex()));
 				readData.put("userId", mbList.get(i).getMbUserId());
 				readData.put("userPw", mbList.get(i).getMbUserPw());
-				readData.put("isAdmin", String.valueOf(mbList.get(i).isAdmin()));
+				readData.put("isAdmin", String.valueOf(mbList.get(i).isAdmin()));*/
+				return mbList.get(i);
 			}
 		}
-		return readData;
+		return null;
 	}
 
 	/**
@@ -243,13 +290,13 @@ public class Database {
 	 * @return int 충전후 잔액
 	 */
 	public MemberVO chargeMoney(int id, int addMoney) {
-		MemberVO session = new MemberVO();
 		for (int i = 0; i < mbList.size(); i++) {
 			if (mbList.get(i).getIndex() == id) {
 				//mbList.get(i).setMbUserMoney(addMoney);
 //				return mbList.get(i).getMbUserMoney();
-				session.setMbUserMoney(session.getMbUserMoney()+addMoney);
-				return session;
+				mbList.get(i).setMbUserMoney(mbList.get(i).getMbUserMoney()+addMoney);
+				exportMemList(mbList);
+				return mbList.get(i);
 			}
 		}
 		return null;
@@ -277,10 +324,11 @@ public class Database {
 			newVO.setBsRoute(busInfo.get("bsRoute"));													// 노선
 			newVO.setBsPrice(busInfo.get("bsPrice"));													// 요금
 			newVO.setBsDepartureTime(df.format(new Date().getTime() + ( (long) 1000 * 60 * 60 * i )));	// 출발시간
+			newVO.setIsExfired("운행중");																	// 운행여부
 			newVO.setBsKind(busInfo.get("bsKind")); 													// 일반-우등
 			if(busInfo.get("bsKind").equals("우등")){														// 좌석
 				newVO.setBsTotalSeat(35);
-			}else if(busInfo.get("bsKind").equals("우등")){
+			}else if(busInfo.get("bsKind").equals("일반")){
 				newVO.setBsTotalSeat(35+10);
 			};
 			if(0<=i && i<Integer.parseInt(busInfo.get("numberService"))-1){
@@ -301,6 +349,27 @@ public class Database {
 		for (int i = 0; i < bsList.size(); i++) {
 			if (bsList.get(i).getIndex() == bus_id) {
 				bsList.remove(i);
+				return true;
+			}
+		}
+
+		return false;
+	}
+	
+	/**
+	 * 버스DB-노선비활성화
+	 *	DB에서 '입력한 index'에 해당하는 버스을 찾아 이름을 바꾸고 비활성화 수행
+	 * 
+	 * @param 인덱스값
+	 * @return boolean 삭제결과
+	 */
+	public boolean changeBus(int bus_id) {
+		for (int i = 0; i < bsList.size(); i++) {
+			if (bsList.get(i).getIndex() == bus_id) {
+				String convert = "(구)"+bsList.get(i).getBsRoute();
+				bsList.get(i).setBsRoute(convert);
+				bsList.get(i).setIsExfired("만료됨");
+				bsList.set(i, bsList.get(i));
 				return true;
 			}
 		}
@@ -340,26 +409,26 @@ public class Database {
 	 * @param 버스VO
 	 * @return int 구입후잔액, -1 해당 노선이 존재하지 않습니다, -2 좌석이 이미 판매되었습니다, -3	 잔액이 부족합니다.
 	 */
-	public int createTicket(Map<String, String> ticketInfo) {
+	public int createTicket(TicketVO paidVo) {
 
 		for (int j = 0; j < bsList.size(); j++) {
-			if (String.valueOf(bsList.get(j).getIndex()).equals(ticketInfo.get("bsRoute"))) {			// 해당 노선이 있을때
+			if (String.valueOf(bsList.get(j).getIndex()).equals(paidVo.getBusIndex()) && bsList.get(j).getIsExfired().equals("운행중")) {	// 해당 노선이 운행중일때
 				// 팔린좌석인지 체크하는 반복문
 				for (int i = 0; i < tkList.size(); i++) {
 					if (tkList.get(i).getBusIndex() == bsList.get(j).getIndex() && 						// 티켓의 외래키(버스id)로 버스정보 얻어오기-
-							tkList.get(i).getSeatIndex() == Integer.parseInt(ticketInfo.get("seat"))) {	// 팔린좌석인가?
+							tkList.get(i).getSeatIndex() == paidVo.getSeatIndex()) {	// 팔린좌석인가?
 						return -2;	//좌석이 이미 판매되었습니다.
 					}
 				}// 안팔렸다!
 				TicketVO newVO = new TicketVO();
 
-				newVO.setId(bsIndex++);												// 티켓인덱스
-				newVO.setMemIndex(Integer.parseInt(ticketInfo.get("session")));		// 구매자		를 외래키를 이용하여 호출
-				newVO.setBusIndex(bsList.get(j).getIndex());								// 버스정보	를 외래키를 이용하여 호출
-				newVO.setTkBuyTime(df.format(new Date()));							// 구매시간
-				newVO.setSeatIndex(Integer.parseInt(ticketInfo.get("seat")));;			// 좌석
+				newVO.setId(bsIndex++);													// 티켓인덱스
+				newVO.setMemIndex(paidVo.getMemIndex());								// 구매자를 외래키를 이용하여 호출
+				newVO.setBusIndex(bsList.get(j).getIndex());							// 버스정보	를 외래키를 이용하여 호출
+				newVO.setTkBuyTime(df.format(new Date()));								// 구매시간
+				newVO.setSeatIndex(paidVo.getSeatIndex());								// 좌석
 				for (int i = 0; i < mbList.size(); i++) {
-					if (mbList.get(i).getIndex() == Integer.parseInt(ticketInfo.get("session"))) {
+					if (mbList.get(i).getIndex() == paidVo.getMemIndex()) {
 						if(mbList.get(i).getMbUserMoney() >= Integer.parseInt(bsList.get(j).getBsPrice())){	//현재 잔액이 결제금액보다 많으면
 							tkList.add(newVO);																// 티켓목록에 새로운 티켓추가
 							mbList.get(i).setMbUserMoney(-Integer.parseInt(bsList.get(j).getBsPrice()));	//결제가능
@@ -411,4 +480,145 @@ public class Database {
 		return sum;
 	}
 
+	
+	 /**
+     * 회원리스트 외부로부터 입력 (엑셀로 데이터 입력, jxl라이브러리 사용)
+	 * @param mbList2 
+     */
+	
+	public void exportMemList(List mbList2){
+        Iterator itr = mbList2.iterator();
+        // value 값 정렬로 해서가져오기      
+         
+        useJxlWrite(itr);
+       
+    }
+
+
+
+
+public void importMemList(){
+        try {
+        	
+            Workbook workbook = Workbook.getWorkbook(new File("data.xls"));
+            if(workbook==null){
+            	return;
+            }
+            Sheet sheet = workbook.getSheet(0);
+           
+           
+            int row = 1;
+            int end = sheet.getRows();
+            int updateCount = 0;
+            while(row < end ){
+                MemberVO vo = new MemberVO();
+                String id = sheet.getCell(0, row).getContents();
+                if (mbList.contains(id)) updateCount++;             
+                vo.setIndex(Integer.parseInt(id)); //인덱스id
+                vo.setAdmin(Boolean.parseBoolean(sheet.getCell(1, row).getContents()));//관리자 회원 구분
+                vo.setMbUserId(sheet.getCell(2, row).getContents());//회원아이디
+                vo.setMbUserPw(sheet.getCell(3, row).getContents());//회원패스워드
+                vo.setMbUserName(sheet.getCell(4, row).getContents());//회원이름
+                vo.setMbUserMoney(Integer.parseInt(sheet.getCell(5, row).getContents()));//회원 가진돈                
+               
+                mbList.add(vo);
+                mbIndex=mbList.size(); //인덱스id
+                row++;
+            }
+            workbook.close();
+            System.out.println("엑셀파일로부터 "+(row-1)+"명의 데이터를 읽었습니다.");
+            System.out.println("=> "+(end-updateCount-1)+" 명의 데이터가 추가, "+updateCount+"명의 데이터가 갱신되었습니다.\n");
+        } catch (Exception e) {
+            System.out.println("예외발생: "+e.getMessage());
+        }
+       
+       
+    }
+   
+   
+    public void useJxlWrite(Iterator<MemberVO> itrMemValue){
+        WritableWorkbook workbook=null;      
+        try {
+           
+            workbook = Workbook.createWorkbook(new File("data.xls"));//워크북 생성
+            WritableSheet sheet = workbook.createSheet("Member List",  0); //시트생성          
+           
+            /*열 머리 셀 포맷 */
+            WritableCellFormat ColumNameFormat = new WritableCellFormat(); // 열머리 셀 포멧 생성
+            ColumNameFormat.setAlignment(Alignment.CENTRE); // 셀 가운데 정렬
+            ColumNameFormat.setBackground(Colour.GOLD); // 셀 배경색 설정.
+            WritableFont arial10fontBold = new WritableFont(WritableFont.ARIAL, 10,WritableFont.BOLD);
+            //폰트서식관련객체 생성.  new WritableFont(폰트이름, 폰트크기,폰트굵기지정)
+            ColumNameFormat.setFont(arial10fontBold); //설정한 폰트서식을 셀포맷에 설정.
+       
+           
+            // Sheet의 컬럼 넓이 설정 , setCloumnView(몇번째 컬럼, 넓이)
+            for(int i=0; i<mbList.size(); i++){
+            	sheet.setColumnView(i, 20); // sheet의 0번째 컬럼의 넓이 설정.
+            }
+//            
+//            sheet.setColumnView(1, 20); // sheet의 1번째 컬럼의 넓이 설정
+//            sheet.setColumnView(2, 20); // sheet의 2번째 컬럼의 넓이 설정
+//            sheet.setColumnView(3, 20); // sheet의 3번째 컬럼의 넓이 설정
+//            sheet.setColumnView(4, 20); // sheet의 3번째 컬럼의 넓이 설정
+//            sheet.setColumnView(5, 20); // sheet의 3번째 컬럼의 넓이 설정
+            
+           
+            // 열머리 Cell생성후 sheet 추가
+            sheet.addCell(new Label(0, 0, "번호",ColumNameFormat)); //라벨(열,행,"문장",포멧)
+            sheet.addCell(new Label(1, 0, "관리자여부",ColumNameFormat));
+            sheet.addCell(new Label(2, 0, "아이디",ColumNameFormat));
+            sheet.addCell(new Label(3, 0, "패스워드",ColumNameFormat));
+            sheet.addCell(new Label(4, 0, "이름",ColumNameFormat));       
+            sheet.addCell(new Label(5, 0, "충전금액",ColumNameFormat));
+                   
+            
+       
+           
+            int rowNum = 1;              
+            //int rowT = rowNum+1;
+            while(itrMemValue.hasNext()){
+                 try {                   
+                    MemberVO vo = itrMemValue.next();
+                    //jxl.write.Label.Label(int c, int r, String cont) : //열, 행, 내용
+                                      
+                    Label lblIndex = new Label(0,rowNum, String.valueOf(vo.getIndex()));
+                    Label lblidAdmin = new Label(1,rowNum,String.valueOf(vo.isAdmin()));
+                    Label lblId = new Label(2,rowNum,vo.getMbUserId());
+                    Label lblPw = new Label(3,rowNum, vo.getMbUserPw());
+                    Label lblName = new Label(4,rowNum,vo.getMbUserName());                  
+                    Label lblUserMoney = new Label(5,rowNum, String.valueOf(vo.getMbUserMoney()));
+
+
+                    //셀에 라벨 추가
+                    sheet.addCell(lblIndex);
+                    sheet.addCell(lblidAdmin);
+                    sheet.addCell(lblId);
+                    sheet.addCell(lblPw);
+                    sheet.addCell(lblName);
+                    sheet.addCell(lblUserMoney);
+
+
+                   
+                } catch (Exception e) {
+                    System.out.println("예외발생: "+e.getMessage());
+                }    
+               
+                rowNum++; //행번호 증가
+                //rowT++;
+            }//while---------------------          
+           
+            workbook.write(); //준비된 정보를 엑셀 포멧에 맞게 작성 즉, 엑셀 파일로 쓰기
+            System.out.println("회원목록이 엑셀로 저장되었습니다.");
+        } catch (Exception e) {
+            System.out.println("예외발생: "+e.getMessage());
+        } finally{
+            try {
+                if(workbook!=null) workbook.close();//닫기 , 처리 후 메모리에서 해제 처리
+            } catch (Exception e) {
+                System.out.println("예외발생: "+e.getMessage());
+            }
+        }//catch ----------------
+       
+    }//writeJxl()----------------
 }

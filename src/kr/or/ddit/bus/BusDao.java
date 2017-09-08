@@ -7,6 +7,8 @@ public interface BusDao{
 	boolean createBus(Map<String, String> busAdd);
 
 	boolean deleteBus(int id);
+	
+	boolean changeBus(int id);
 
 	boolean showBusList();
 

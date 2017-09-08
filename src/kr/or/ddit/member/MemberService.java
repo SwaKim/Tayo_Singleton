@@ -25,10 +25,10 @@ public interface MemberService {
 	/**
 	 * 회원 가입 회원 가입에 필요한 id pwd 이름 생성해준다.
 	 * 
-	 * @param Map<s,s> member
+	 * @param MemberVO joinMemberVO
 	 * @return boolean
 	 */
-	public boolean joinMember(Map<String, String> member);
+	public boolean joinMember(MemberVO joinMemberVO);
 
 	/**
 	 * 회원 삭제 List에서 id와 일치하는 것을 찾아 remove해준다.

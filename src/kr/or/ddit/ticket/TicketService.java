@@ -1,6 +1,7 @@
 package kr.or.ddit.ticket;
 
-import java.util.Map;
+import kr.or.ddit.vo.TicketVO;
+
 
 /**
  * @Class Name : TicketService.java
@@ -29,7 +30,7 @@ public interface TicketService {
 	 *            -2   좌석이 이미 판매되었습니다.
 	 *            -3   잔액이 부족합니다.
 	 */
-	public int payBusTicket(Map<String, String> ticket);
+	public int payBusTicket(TicketVO paidVo);
 
 	/**
 	 * 환불메서드 회원이 가지고있는 티켓이면 환불 아니면 실패

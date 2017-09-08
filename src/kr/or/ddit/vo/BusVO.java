@@ -15,6 +15,16 @@ public class BusVO {
 
 	private String bsKind;			//일반?우등?
 
+	private String isExfired;		//만료여부
+
+
+	public String getIsExfired() {
+		return isExfired;
+	}
+
+	public void setIsExfired(String isExfired) {
+		this.isExfired = isExfired;
+	}
 
 	public int getIndex() {
 		return index;

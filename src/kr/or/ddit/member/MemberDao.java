@@ -6,13 +6,13 @@ import kr.or.ddit.vo.MemberVO;
 
 public interface MemberDao {
 
-	boolean createMember(Map<String, String> member);
+	boolean createMember(MemberVO joinMemberVO);
 
 	boolean deleteMember(int id);
 
 	boolean idCheck(String menberid);
 
-	int loginCheck(Map<String, String> login);
+	MemberVO findThisMember(Map<String, String> login);
 
 	MemberVO chargeMoney(int id, int money);
 

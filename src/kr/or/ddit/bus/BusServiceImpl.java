@@ -50,6 +50,13 @@ public class BusServiceImpl implements BusService{
 		return busDao.deleteBus(id);
 	}
 	
+	// 버스변경
+	@Override
+	public boolean changeBus(int id) {
+
+		return busDao.changeBus(id);
+	}
+	
 	// 버스리스트
 	public boolean showBusList() {
 		// busVosize
